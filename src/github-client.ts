@@ -49,6 +49,56 @@ export class GitHubClient {
   }
 
   /**
+   * Sleep for a specified duration
+   */
+  private async sleep(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  /**
+   * Retry a function with exponential backoff
+   */
+  private async retryWithBackoff<T>(
+    fn: () => Promise<T>,
+    maxRetries = 5,
+    initialDelay = 60000,
+  ): Promise<T> {
+    let lastError: unknown;
+
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        return await fn();
+      } catch (error) {
+        lastError = error;
+
+        // Check if it's a rate limit error (403 or 429)
+        const isRateLimit =
+          typeof error === "object" &&
+          error !== null &&
+          "status" in error &&
+          ((error as { status: number }).status === 403 ||
+           (error as { status: number }).status === 429);
+
+        if (!isRateLimit || attempt === maxRetries) {
+          throw error;
+        }
+
+        // Calculate delay with exponential backoff
+        const delay = initialDelay * Math.pow(2, attempt);
+        const delaySeconds = Math.round(delay / 1000);
+
+        this.logger.warn(
+          `Rate limit hit. Waiting ${delaySeconds} seconds before retry ${attempt + 1}/${maxRetries}...`,
+        );
+
+        await this.sleep(delay);
+      }
+    }
+
+    throw lastError;
+  }
+
+  /**
    * Helper method to paginate through search results using date-based pagination
    * This allows fetching beyond GitHub's 1000 result limit per query
    */
@@ -71,13 +121,15 @@ export class GitHubClient {
 
       while (page <= maxPages) {
         try {
-          const response = await this.octokit.search.issuesAndPullRequests({
-            q: searchQuery,
-            sort: sortField,
-            order: "desc",
-            per_page: 100,
-            page,
-          });
+          const response = await this.retryWithBackoff(() =>
+            this.octokit.search.issuesAndPullRequests({
+              q: searchQuery,
+              sort: sortField,
+              order: "desc",
+              per_page: 100,
+              page,
+            }),
+          );
 
           if (response.data.items.length === 0) {
             hasMore = false;
@@ -155,11 +207,13 @@ export class GitHubClient {
           const [owner, repo] = item.repository_url.split("/").slice(-2);
 
           try {
-            const prDetail = await this.octokit.pulls.get({
-              owner,
-              repo,
-              pull_number: item.number,
-            });
+            const prDetail = await this.retryWithBackoff(() =>
+              this.octokit.pulls.get({
+                owner,
+                repo,
+                pull_number: item.number,
+              }),
+            );
 
             const pr: PullRequest = {
               id: prDetail.data.id,
@@ -293,11 +347,13 @@ export class GitHubClient {
 
           try {
             // Get reviews for this PR
-            const reviewsResponse = await this.octokit.pulls.listReviews({
-              owner,
-              repo,
-              pull_number: item.number,
-            });
+            const reviewsResponse = await this.retryWithBackoff(() =>
+              this.octokit.pulls.listReviews({
+                owner,
+                repo,
+                pull_number: item.number,
+              }),
+            );
 
             // Filter reviews by the current user
             const userReviews = reviewsResponse.data.filter(
