@@ -2,13 +2,9 @@
  * Configuration management for GitHub Activity
  */
 
-import * as dotenv from "dotenv";
 import * as path from "path";
 import * as fs from "fs";
 import { Config } from "./types";
-
-// Load environment variables from .env file
-dotenv.config();
 
 export interface CliOptions {
   token?: string;
@@ -36,16 +32,8 @@ export class ConfigManager {
     const extension = format === "json" ? ".json" : ".db";
     const defaultFilename = `activities${extension}`;
 
-    // If full path provided via env (legacy support)
-    if (!cliOptions?.path && !cliOptions?.output && process.env.STORAGE_PATH) {
-      return process.env.STORAGE_PATH;
-    }
-
     // Build from path and output options
-    const directory =
-      cliOptions?.path ||
-      process.env.STORAGE_PATH ||
-      path.join(process.cwd(), "data");
+    const directory = cliOptions?.path || path.join(process.cwd(), "data");
     const filename = cliOptions?.output
       ? cliOptions.output.includes(".")
         ? cliOptions.output
@@ -56,20 +44,15 @@ export class ConfigManager {
   }
 
   /**
-   * Load configuration from CLI options and environment variables
-   * CLI options take precedence over environment variables
+   * Load configuration from CLI options
    */
   private loadConfig(cliOptions?: CliOptions): Config {
-    // CLI options take precedence, then environment variables
-    const githubToken = cliOptions?.token || process.env.GITHUB_TOKEN;
-    const githubUsername = cliOptions?.user || process.env.GITHUB_USERNAME;
+    const githubToken = cliOptions?.token;
+    const githubUsername = cliOptions?.user;
 
     if (!githubToken) {
       throw new Error(
-        "GITHUB_TOKEN is required. Provide it via:\n" +
-          "  --token <token> flag, or\n" +
-          "  GITHUB_TOKEN environment variable, or\n" +
-          "  .env file\n\n" +
+        "GITHUB_TOKEN is required. Provide it via --token <token> flag.\n\n" +
           "Create a token at: https://github.com/settings/tokens\n" +
           "Required scopes: repo, user, read:org",
       );
@@ -77,18 +60,12 @@ export class ConfigManager {
 
     if (!githubUsername) {
       throw new Error(
-        "GITHUB_USERNAME is required. Provide it via:\n" +
-          "  --user <username> flag, or\n" +
-          "  GITHUB_USERNAME environment variable, or\n" +
-          "  .env file",
+        "GITHUB_USERNAME is required. Provide it via --user <username> flag.",
       );
     }
 
     // Build storage path from format, path, and file options
-    const storageFormat =
-      cliOptions?.format ||
-      (process.env.STORAGE_TYPE as "json" | "sqlite") ||
-      "json";
+    const storageFormat = cliOptions?.format || "json";
     const storagePath = this.buildStoragePath(cliOptions, storageFormat);
 
     return {
@@ -96,10 +73,7 @@ export class ConfigManager {
       githubUsername,
       storageType: storageFormat,
       storagePath,
-      logLevel:
-        cliOptions?.log ||
-        (process.env.LOG_LEVEL as Config["logLevel"]) ||
-        "info",
+      logLevel: cliOptions?.log || "info",
     };
   }
 
@@ -158,6 +132,3 @@ export class ConfigManager {
     }
   }
 }
-
-// Default singleton instance for backwards compatibility (used by tests and npm run dev)
-export const configManager = new ConfigManager();
