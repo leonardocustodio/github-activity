@@ -1,0 +1,41 @@
+[
+  {
+    "id": 987654321,
+    "user": {
+      "login": "testuser",
+      "id": 12345,
+      "type": "User"
+    },
+    "body": "LGTM! Great work on this feature.",
+    "state": "APPROVED",
+    "html_url": "https://github.com/otheruser/project/pull/100#pullrequestreview-987654321",
+    "submitted_at": "2025-01-20T15:30:00Z",
+    "pull_request_url": "https://api.github.com/repos/otheruser/project/pulls/100"
+  },
+  {
+    "id": 987654322,
+    "user": {
+      "login": "testuser",
+      "id": 12345,
+      "type": "User"
+    },
+    "body": "Please fix the linting errors before merging.",
+    "state": "CHANGES_REQUESTED",
+    "html_url": "https://github.com/teammate/webapp/pull/25#pullrequestreview-987654322",
+    "submitted_at": "2025-02-05T09:45:00Z",
+    "pull_request_url": "https://api.github.com/repos/teammate/webapp/pulls/25"
+  },
+  {
+    "id": 987654323,
+    "user": {
+      "login": "testuser",
+      "id": 12345,
+      "type": "User"
+    },
+    "body": "Have you considered using a different approach here?",
+    "state": "COMMENTED",
+    "html_url": "https://github.com/company/backend/pull/200#pullrequestreview-987654323",
+    "submitted_at": "2025-03-01T14:20:00Z",
+    "pull_request_url": "https://api.github.com/repos/company/backend/pulls/200"
+  }
+]
