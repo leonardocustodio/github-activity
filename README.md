@@ -17,7 +17,7 @@ A powerful CLI tool to track and report on all your GitHub activity including pu
 
 ```bash
 # Run directly with npx
-npx github-activity fetch --token YOUR_GITHUB_TOKEN --user YOUR_USERNAME
+npx @leonardocustodio/github-activity fetch --token YOUR_GITHUB_TOKEN --user YOUR_USERNAME
 
 # Or install globally
 npm install -g @leonardocustodio/github-activity
