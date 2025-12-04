@@ -14,6 +14,7 @@ const program = new Command();
 
 program
   .name("github-activity")
+  .usage("[command] [options]")
   .description(
     "Track all your GitHub PRs, issues, and reviews across repositories",
   )
